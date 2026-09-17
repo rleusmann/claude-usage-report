@@ -15,7 +15,14 @@ state=$(jq -c '
 
 mkdir -p "$DATA_DIR"
 last_file="$DATA_DIR/.limits-last"
-[ "$state" = "$(cat "$last_file" 2>/dev/null)" ] && exit 0
+last="$(cat "$last_file" 2>/dev/null || true)"
+if [ -n "$last" ]; then
+  # Usage only grows within a window; parallel sessions may report slightly older values.
+  newer=$(jq -n --argjson a "$last" --argjson b "$state" '
+    ($a.five_reset != $b.five_reset) or ($a.week_reset != $b.week_reset)
+    or (($b.five_pct // 0) > ($a.five_pct // 0)) or (($b.week_pct // 0) > ($a.week_pct // 0))') || newer=true
+  [ "$newer" = "true" ] || exit 0
+fi
 
 printf '%s\n' "$state" >"$last_file"
 jq -c --argjson ts "$(date +%s)" '{ts: $ts} + .' <<<"$state" >>"$LIMITS_PATH"
