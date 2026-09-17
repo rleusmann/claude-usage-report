@@ -1,0 +1,21 @@
+{
+  "_source": "https://platform.claude.com/docs/en/about-claude/pricing (as of 2026-09-17), USD per million tokens",
+  "web_search_per_request": 0.01,
+  "fast_mode_multiplier": 2.0,
+  "models": [
+    {"prefix": "claude-fable-5-1",  "input": 10.0, "cache_write_5m": 12.5,  "cache_write_1h": 20.0, "cache_read": 0.25, "output": 50.0},
+    {"prefix": "claude-mythos-5-1", "input": 10.0, "cache_write_5m": 12.5,  "cache_write_1h": 20.0, "cache_read": 0.25, "output": 50.0},
+    {"prefix": "claude-fable-5",    "input": 10.0, "cache_write_5m": 12.5,  "cache_write_1h": 20.0, "cache_read": 1.0,  "output": 50.0},
+    {"prefix": "claude-mythos-5",   "input": 10.0, "cache_write_5m": 12.5,  "cache_write_1h": 20.0, "cache_read": 1.0,  "output": 50.0},
+    {"prefix": "claude-opus-5",     "input": 5.0,  "cache_write_5m": 6.25,  "cache_write_1h": 10.0, "cache_read": 0.5,  "output": 25.0},
+    {"prefix": "claude-opus-4-8",   "input": 5.0,  "cache_write_5m": 6.25,  "cache_write_1h": 10.0, "cache_read": 0.5,  "output": 25.0},
+    {"prefix": "claude-opus-4-7",   "input": 5.0,  "cache_write_5m": 6.25,  "cache_write_1h": 10.0, "cache_read": 0.5,  "output": 25.0},
+    {"prefix": "claude-opus-4-6",   "input": 5.0,  "cache_write_5m": 6.25,  "cache_write_1h": 10.0, "cache_read": 0.5,  "output": 25.0},
+    {"prefix": "claude-opus-4-5",   "input": 5.0,  "cache_write_5m": 6.25,  "cache_write_1h": 10.0, "cache_read": 0.5,  "output": 25.0},
+    {"prefix": "claude-opus-4",     "input": 15.0, "cache_write_5m": 18.75, "cache_write_1h": 30.0, "cache_read": 1.5,  "output": 75.0},
+    {"prefix": "claude-sonnet-5",   "input": 2.0,  "cache_write_5m": 2.5,   "cache_write_1h": 4.0,  "cache_read": 0.2,  "output": 10.0},
+    {"prefix": "claude-sonnet-4",   "input": 3.0,  "cache_write_5m": 3.75,  "cache_write_1h": 6.0,  "cache_read": 0.3,  "output": 15.0},
+    {"prefix": "claude-haiku-4-5",  "input": 1.0,  "cache_write_5m": 1.25,  "cache_write_1h": 2.0,  "cache_read": 0.1,  "output": 5.0},
+    {"prefix": "claude-3-5-haiku",  "input": 0.8,  "cache_write_5m": 1.0,   "cache_write_1h": 1.6,  "cache_read": 0.08, "output": 4.0}
+  ]
+}

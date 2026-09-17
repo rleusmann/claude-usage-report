@@ -1,0 +1,27 @@
+{
+  "description": "Keep the usage database and report up to date without blocking Claude Code",
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/usage-report-update\" --background",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/usage-report-update\" --background --throttle 1800",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

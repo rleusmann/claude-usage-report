@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# Ingests new transcript data and re-renders the usage report.
+#
+#   usage-report-update                  run in the foreground
+#   usage-report-update --background     detach immediately (for hooks)
+#   usage-report-update --throttle 1800  skip if the last run is more recent than N seconds
+#   usage-report-update --open           open the report in the browser afterwards
+#   usage-report-update --reprice        recompute all costs from pricing.json
+#   usage-report-update --print-paths    print data, database and report locations
+set -euo pipefail
+
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/paths.sh"
+
+background=false
+open_report=false
+throttle=0
+reprice=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --background) background=true ;;
+    --open) open_report=true ;;
+    --throttle) throttle="$2"; shift ;;
+    --reprice) reprice=(--reprice) ;;
+    --print-paths)
+      printf 'data:    %s\ndb:      %s\nreport:  %s\nlimits:  %s\nlog:     %s\n' \
+        "$DATA_DIR" "$DB_PATH" "$REPORT_PATH" "$LIMITS_PATH" "$LOG_PATH"
+      exit 0 ;;
+    *) echo "unknown option: $1" >&2; exit 2 ;;
+  esac
+  shift
+done
+
+mkdir -p "$DATA_DIR"
+stamp="$DATA_DIR/.last-run"
+
+if [ "$throttle" -gt 0 ] && [ -f "$stamp" ]; then
+  age=$(( $(date +%s) - $(stat -f %m "$stamp" 2>/dev/null || stat -c %Y "$stamp") ))
+  [ "$age" -lt "$throttle" ] && exit 0
+fi
+
+if $background; then
+  args=()
+  $open_report && args+=(--open)
+  [ ${#reprice[@]} -gt 0 ] && args+=("${reprice[@]}")
+  nohup "$0" ${args[@]+"${args[@]}"} </dev/null >>"$LOG_PATH" 2>&1 &
+  exit 0
+fi
+
+lock="$DATA_DIR/.lock"
+if ! mkdir "$lock" 2>/dev/null; then
+  if [ -n "$(find "$lock" -maxdepth 0 -mmin +10 2>/dev/null)" ]; then
+    rmdir "$lock" 2>/dev/null || true
+    mkdir "$lock" 2>/dev/null || exit 0
+  else
+    exit 0
+  fi
+fi
+trap 'rmdir "$lock" 2>/dev/null || true' EXIT
+
+if [ -f "$LOG_PATH" ] && [ "$(wc -c <"$LOG_PATH")" -gt 1048576 ]; then
+  tail -c 262144 "$LOG_PATH" >"$LOG_PATH.tmp" && mv "$LOG_PATH.tmp" "$LOG_PATH"
+fi
+
+python="$(command -v python3 || echo /usr/bin/python3)"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] update started"
+"$python" "$PLUGIN_ROOT/lib/ingest.py" --db "$DB_PATH" --limits "$LIMITS_PATH" ${reprice[@]+"${reprice[@]}"}
+"$python" "$PLUGIN_ROOT/lib/render.py" --db "$DB_PATH" --out "$REPORT_PATH"
+touch "$stamp"
+
+if $open_report; then
+  if command -v open >/dev/null; then open "$REPORT_PATH"; else xdg-open "$REPORT_PATH" >/dev/null 2>&1 || true; fi
+fi

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Appends rate-limit snapshots from the status line JSON (stdin) to limits.jsonl.
+# Only writes when a percentage or reset time changed, so it is cheap to call on every refresh.
+set -euo pipefail
+
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/paths.sh"
+
+state=$(jq -c '
+  (.rate_limits // {}) as $r
+  | {five_pct: $r.five_hour.used_percentage, five_reset: $r.five_hour.resets_at,
+     week_pct: $r.seven_day.used_percentage, week_reset: $r.seven_day.resets_at}
+  | select(.five_pct != null or .week_pct != null)
+') || exit 0
+[ -z "$state" ] && exit 0
+
+mkdir -p "$DATA_DIR"
+last_file="$DATA_DIR/.limits-last"
+[ "$state" = "$(cat "$last_file" 2>/dev/null)" ] && exit 0
+
+printf '%s\n' "$state" >"$last_file"
+jq -c --argjson ts "$(date +%s)" '{ts: $ts} + .' <<<"$state" >>"$LIMITS_PATH"

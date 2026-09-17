@@ -1,0 +1,14 @@
+{
+  "name": "claude-usage-report",
+  "description": "Local Claude Code usage and cost reporting",
+  "owner": {
+    "name": "Robert Leusmann"
+  },
+  "plugins": [
+    {
+      "name": "usage-report",
+      "source": "./",
+      "description": "Local HTML report of Claude Code token usage, API-equivalent cost and subscription limit utilization"
+    }
+  ]
+}

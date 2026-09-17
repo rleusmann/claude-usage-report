@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Usage</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+<style>
+:root {
+  color-scheme: light;
+  --surface-0: #f4f3f0;
+  --surface-1: #fcfcfb;
+  --border: #e3e2de;
+  --grid: #ecebe7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7974;
+  --accent: #2a78d6;
+  --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #eda100;
+  --series-5: #e87ba4; --series-6: #008300; --series-7: #4a3aa7; --series-8: #e34948;
+  --seq-0: #f0efec; --seq-1: #cde2fb; --seq-2: #86b6ef; --seq-3: #3987e5; --seq-4: #1c5cab; --seq-5: #0d366b;
+  --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface-0: #121211; --surface-1: #1a1a19; --border: #2e2e2c; --grid: #262624;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #8f8e86; --accent: #3987e5;
+    --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
+    --series-5: #d55181; --series-6: #008300; --series-7: #9085e9; --series-8: #e66767;
+    --seq-0: #383835; --seq-1: #104281; --seq-2: #1c5cab; --seq-3: #2a78d6; --seq-4: #5598e7; --seq-5: #9ec5f4;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-0: #121211; --surface-1: #1a1a19; --border: #2e2e2c; --grid: #262624;
+  --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #8f8e86; --accent: #3987e5;
+  --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
+  --series-5: #d55181; --series-6: #008300; --series-7: #9085e9; --series-8: #e66767;
+  --seq-0: #383835; --seq-1: #104281; --seq-2: #1c5cab; --seq-3: #2a78d6; --seq-4: #5598e7; --seq-5: #9ec5f4;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--surface-0); color: var(--text-primary);
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+header {
+  position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--surface-0) 88%, transparent);
+  backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+}
+.bar { max-width: 1240px; margin: 0 auto; padding: 12px 16px; display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
+.bar h1 { font-size: 17px; margin: 0; letter-spacing: -0.01em; }
+.bar .meta { color: var(--text-muted); font-size: 12px; }
+nav { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
+nav a { color: var(--text-secondary); text-decoration: none; font-size: 12.5px; padding: 3px 8px; border-radius: 6px; }
+nav a:hover { background: var(--surface-1); color: var(--text-primary); }
+main { max-width: 1240px; margin: 0 auto; padding: 20px 16px 64px; }
+section { margin-top: 36px; scroll-margin-top: 64px; }
+section > h2 { font-size: 15px; margin: 0 0 4px; letter-spacing: -0.01em; }
+section > p.lede { margin: 0 0 14px; color: var(--text-secondary); font-size: 13px; max-width: 80ch; }
+.grid { display: grid; gap: 12px; }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); }
+.tiles { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+.card h3 { font-size: 12.5px; font-weight: 600; margin: 0 0 8px; color: var(--text-secondary); }
+.tile .label { font-size: 12px; color: var(--text-secondary); }
+.tile .value { font-size: 24px; font-weight: 650; letter-spacing: -0.02em; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.tile .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.chart { width: 100%; height: 300px; }
+.chart.tall { height: 380px; }
+.chart.short { height: 220px; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--text-secondary); font-weight: 600; white-space: nowrap; }
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable:hover { color: var(--text-primary); }
+th[aria-sort="ascending"]::after { content: " ▲"; font-size: 9px; }
+th[aria-sort="descending"]::after { content: " ▼"; font-size: 9px; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+td.muted { color: var(--text-muted); }
+td.nowrap { white-space: nowrap; }
+td.excerpt { min-width: 260px; }
+tr:last-child td { border-bottom: none; }
+.inline-bar { display: inline-block; height: 8px; border-radius: 0 4px 4px 0; background: var(--accent); vertical-align: middle; margin-right: 6px; }
+.empty { color: var(--text-muted); font-size: 13px; padding: 20px 0; }
+.status { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; font-weight: 600; }
+.status i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+input[type="search"] {
+  background: var(--surface-0); color: var(--text-primary); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 10px; font: inherit; min-width: 240px;
+}
+.note { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+.meter { height: 8px; border-radius: 4px; background: var(--grid); margin-top: 8px; position: relative; }
+.meter > span { position: absolute; inset: 0 auto 0 0; border-radius: 4px; }
+.meter > b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--text-secondary); }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>Claude Usage</h1>
+    <span class="meta" id="meta"></span>
+    <nav>
+      <a href="#limits">Limits</a><a href="#daily">Daily</a><a href="#projects">Projects</a>
+      <a href="#patterns">Patterns</a><a href="#cache">Cache</a><a href="#tools">Tools</a>
+      <a href="#models">Model &amp; effort</a><a href="#output">Output</a>
+      <a href="#outliers">Outliers</a><a href="#history">History</a><a href="#sessions">Sessions</a>
+    </nav>
+  </div>
+</header>
+<main>
+  <div class="grid tiles" id="kpis"></div>
+
+  <section id="limits">
+    <h2>Limits</h2>
+    <p class="lede">Utilization of the 5-hour window and the weekly limit as reported to the status line, with a projection to the next reset.</p>
+    <div id="limits-body"></div>
+  </section>
+
+  <section id="daily">
+    <h2>Daily spend</h2>
+    <p class="lede">API value per day by model: what the requests would have cost at list prices.</p>
+    <div class="card"><div class="chart tall" id="chart-daily"></div></div>
+  </section>
+
+  <section id="projects">
+    <h2>Projects</h2>
+    <p class="lede">Usage per working directory the session was started in.</p>
+    <div class="grid g2">
+      <div class="card"><div class="chart" id="chart-projects"></div></div>
+      <div class="card table-wrap"><table id="table-projects"></table></div>
+    </div>
+  </section>
+
+  <section id="patterns">
+    <h2>Usage patterns</h2>
+    <p class="lede">API value by weekday and hour (local time) across the whole period.</p>
+    <div class="card"><div class="chart" id="chart-heatmap"></div></div>
+  </section>
+
+  <section id="cache">
+    <h2>Cache efficiency</h2>
+    <p class="lede">How much prompt caching saves and where cache rebuilds cost money.</p>
+    <div class="grid tiles" id="cache-tiles"></div>
+    <div class="grid g2" style="margin-top:12px">
+      <div class="card"><h3>Cost breakdown</h3><div class="chart short" id="chart-cache-split"></div></div>
+      <div class="card"><h3>Cache hit ratio per day</h3><div class="chart short" id="chart-cache-ratio"></div></div>
+    </div>
+    <div class="card table-wrap" style="margin-top:12px"><h3>Sessions with the highest cache write cost</h3><table id="table-cache"></table></div>
+  </section>
+
+  <section id="tools">
+    <h2>Tools, MCP and subagents</h2>
+    <p class="lede">Most frequent tool calls, MCP servers aggregated, and the share of cost spent in subagents.</p>
+    <div class="grid g2">
+      <div class="card"><h3>Top tools (calls)</h3><div class="chart tall" id="chart-tools"></div></div>
+      <div class="card">
+        <h3>MCP servers</h3><div class="table-wrap"><table id="table-mcp"></table></div>
+        <h3 style="margin-top:18px">Subagents</h3><div id="subagents"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="models">
+    <h2>Model and effort</h2>
+    <p class="lede">Cost by model and effort level; “per prompt” includes every request until the next prompt.</p>
+    <div class="grid g2">
+      <div class="card table-wrap"><h3>Models</h3><table id="table-models"></table></div>
+      <div class="card table-wrap"><h3>Effort</h3><table id="table-effort"></table></div>
+    </div>
+  </section>
+
+  <section id="output">
+    <h2>Output</h2>
+    <p class="lede">Changed lines and pull requests as tracked by Claude Code, relative to API value.</p>
+    <div class="grid tiles" id="outcome-tiles"></div>
+  </section>
+
+  <section id="outliers">
+    <h2>Outliers</h2>
+    <p class="lede">Most expensive sessions and prompts. Prompt excerpts are truncated and masked for secret-like patterns.</p>
+    <div class="card table-wrap"><h3>Most expensive sessions</h3><table id="table-top-sessions"></table></div>
+    <div class="card table-wrap" style="margin-top:12px"><h3>Most expensive prompts</h3><table id="table-top-prompts"></table></div>
+  </section>
+
+  <section id="history">
+    <h2>Long-term history</h2>
+    <p class="lede">Input and output tokens per month (excluding cache). Older months come from <code>stats-cache.json</code>, recent ones from session transcripts.</p>
+    <div class="card"><div class="chart" id="chart-history"></div></div>
+  </section>
+
+  <section id="sessions">
+    <h2>All sessions</h2>
+    <div class="card">
+      <div class="toolbar"><input type="search" id="session-filter" placeholder="Filter by title or project…"><span class="note" id="session-count"></span></div>
+      <div class="table-wrap"><table id="table-sessions"></table></div>
+    </div>
+  </section>
+</main>
+
+<script>/*__ECHARTS__*/</script>
+<script>
+const DATA = /*__DATA__*/null;
+
+const nf = new Intl.NumberFormat("en-US");
+const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+const usd0 = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const pct = (v, d = 0) => v == null ? "–" : nf.format(Number(v.toFixed(d))) + "%";
+const money = v => v == null ? "–" : (Math.abs(v) >= 1000 ? usd0.format(v) : usd.format(v));
+const compact = v => {
+  if (v == null) return "–";
+  const a = Math.abs(v);
+  if (a >= 1e9) return nf.format(+(v / 1e9).toFixed(1)) + "B";
+  if (a >= 1e6) return nf.format(+(v / 1e6).toFixed(1)) + "M";
+  if (a >= 1e3) return nf.format(+(v / 1e3).toFixed(1)) + "K";
+  return nf.format(v);
+};
+const dt = (ts, opts) => ts == null ? "–" : new Date(ts * 1000).toLocaleString("en-US", Object.assign({ hourCycle: "h23" }, opts || { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }));
+const dateOnly = ts => dt(ts, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+const shortDay = v => new Date(v + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const $ = id => document.getElementById(id);
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+function tile(label, value, sub) {
+  return `<div class="card tile"><div class="label">${esc(label)}</div><div class="value">${value}</div>${sub ? `<div class="sub">${sub}</div>` : ""}</div>`;
+}
+
+function statusFor(p) {
+  if (p == null) return null;
+  if (p >= 100) return ["critical", "limit reached"];
+  if (p >= 90) return ["serious", "critical"];
+  if (p >= 70) return ["warning", "elevated"];
+  return ["good", "on track"];
+}
+function statusBadge(p) {
+  const s = statusFor(p);
+  return s ? `<span class="status"><i style="background:var(--${s[0]})"></i>${s[1]}</span>` : "";
+}
+
+function table(el, columns, rows, opts = {}) {
+  let sortKey = opts.sortKey, dir = opts.dir || "desc";
+  function draw() {
+    const sorted = sortKey ? [...rows].sort((a, b) => {
+      const x = a[sortKey], y = b[sortKey];
+      if (x == null) return 1; if (y == null) return -1;
+      const r = typeof x === "number" ? x - y : String(x).localeCompare(String(y), "de");
+      return dir === "asc" ? r : -r;
+    }) : rows;
+    const head = columns.map(c => `<th class="${c.num ? "num " : ""}${opts.sortable ? "sortable" : ""}" data-key="${c.key}" ${c.key === sortKey ? `aria-sort="${dir === "asc" ? "ascending" : "descending"}"` : ""}>${esc(c.label)}</th>`).join("");
+    const body = sorted.length ? sorted.map(r => "<tr>" + columns.map(c => `<td class="${c.num ? "num" : ""} ${c.cls || ""}">${c.render ? c.render(r) : esc(r[c.key])}</td>`).join("") + "</tr>").join("")
+      : `<tr><td colspan="${columns.length}" class="muted">No data</td></tr>`;
+    el.innerHTML = `<thead><tr>${head}</tr></thead><tbody>${body}</tbody>`;
+    if (opts.sortable) el.querySelectorAll("th").forEach(th => th.onclick = () => {
+      const k = th.dataset.key;
+      dir = sortKey === k && dir === "desc" ? "asc" : "desc";
+      sortKey = k; draw();
+    });
+  }
+  draw();
+  return { update(newRows) { rows = newRows; draw(); } };
+}
+
+function bar(value, max) {
+  const w = max > 0 ? Math.max(2, Math.round(70 * value / max)) : 0;
+  return `<span class="inline-bar" style="width:${w}px"></span>`;
+}
+
+const charts = [];
+function baseOption() {
+  const text = css("--text-secondary"), grid = css("--grid"), muted = css("--text-muted");
+  return {
+    textStyle: { fontFamily: getComputedStyle(document.body).fontFamily, color: text },
+    grid: { left: 8, right: 16, top: 36, bottom: 8, containLabel: true },
+    tooltip: {
+      backgroundColor: css("--surface-1"), borderColor: css("--border"),
+      textStyle: { color: css("--text-primary"), fontSize: 12 }, extraCssText: "border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);",
+    },
+    legend: { top: 0, left: 0, icon: "roundRect", itemWidth: 10, itemHeight: 10, textStyle: { color: text, fontSize: 12 } },
+    _axis: {
+      axisLine: { lineStyle: { color: grid } }, axisTick: { show: false },
+      axisLabel: { color: muted, fontSize: 11 }, splitLine: { lineStyle: { color: grid } },
+    },
+  };
+}
+function axis(extra) { return Object.assign({}, baseOption()._axis, extra); }
+function series(i) { return css(`--series-${(i % 8) + 1}`); }
+
+function mount(id, build) {
+  const el = $(id);
+  if (!el) return;
+  const chart = echarts.init(el, null, { renderer: "svg" });
+  const opt = build();
+  if (!opt) { chart.dispose(); el.innerHTML = '<div class="empty">No data</div>'; el.style.height = "auto"; return; }
+  const base = baseOption(); delete base._axis;
+  chart.setOption(Object.assign(base, opt));
+  charts.push({ chart, build, id });
+}
+function remountAll() {
+  charts.forEach(c => { const base = baseOption(); delete base._axis; c.chart.setOption(Object.assign(base, c.build()), true); });
+}
+window.addEventListener("resize", () => charts.forEach(c => c.chart.resize()));
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", remountAll);
+
+const K = DATA.kpis;
+$("meta").textContent = `Updated ${dt(DATA.generated)} · data since ${dt(K.first, { month: "short", day: "numeric", year: "numeric" })} · ${nf.format(K.requests)} API requests`;
+$("kpis").innerHTML = [
+  tile("API value today", money(K.today)),
+  tile("Last 7 days", money(K.week)),
+  tile("Last 30 days", money(K.month)),
+  tile("Total", money(K.total), "since recording began"),
+  tile("Sessions (30 days)", nf.format(K.sessions_30)),
+  tile("Tokens (30 days)", compact(K.tokens_30), "incl. cache"),
+].join("");
+
+// Limits
+(function () {
+  const L = DATA.limits, body = $("limits-body");
+  if (!L.series.length) {
+    body.innerHTML = '<div class="card empty">No limit data yet. The status line records it to <code>limits.jsonl</code> after the first response in a session.</div>';
+    return;
+  }
+  function forecastTile(label, f, windowLabel) {
+    if (!f) return tile(label, "–", "no active window");
+    const meterColor = `var(--${statusFor(f.pct)[0]})`;
+    const proj = Math.min(f.projected, 99.6);
+    let sub = `Resets ${dt(f.reset, { weekday: "short", hour: "2-digit", minute: "2-digit" })} · ${statusBadge(f.pct)}<br>`;
+    sub += `Projected at reset: <b>${pct(f.projected)}</b>`;
+    if (f.recent_projected != null) sub += ` (recent pace: ${pct(f.recent_projected)})`;
+    if (f.eta) sub += `<br>Reaches 100% around ${dt(f.eta, { weekday: "short", hour: "2-digit", minute: "2-digit" })}`;
+    return `<div class="card tile"><div class="label">${esc(label)}</div><div class="value">${pct(f.pct)}</div>
+      <div class="meter" role="img" aria-label="${pct(f.pct)} used, projected ${pct(f.projected)}"><span style="width:${Math.min(f.pct, 100)}%;background:${meterColor}"></span><b style="left:calc(${proj}% - 1px)"></b></div>
+      <div class="sub" style="margin-top:8px">${sub}</div></div>`;
+  }
+  const F = L.fives;
+  function withResets(points, key) {
+    const out = [];
+    let prevReset = null;
+    for (const p of points) {
+      if (p[key] == null) continue;
+      const reset = p[key + "_reset"];
+      if (prevReset != null && reset !== prevReset && prevReset < p.ts) out.push([prevReset * 1000, 0]);
+      out.push([p.ts * 1000, p[key]]);
+      prevReset = reset;
+    }
+    if (prevReset != null && prevReset * 1000 < Date.now()) out.push([prevReset * 1000, 0]);
+    return out;
+  }
+  body.innerHTML = `
+    <div class="grid g2">
+      ${forecastTile("Weekly limit", L.forecast_week)}
+      ${forecastTile("5-hour window", L.forecast_five)}
+    </div>
+    <div class="grid tiles" style="margin-top:12px">
+      ${tile("Weekly limit ≈ API value", L.week_limit_usd ? usd0.format(L.week_limit_usd) : "–", "estimated from API value per percentage point")}
+      ${tile("5-hour windows recorded", nf.format(F.count), F.avg_peak != null ? `avg. peak ${pct(F.avg_peak)}` : "")}
+      ${tile("Windows ≥ 90%", nf.format(F.over_90), `${nf.format(F.hit_100)} of them hit the limit`)}
+    </div>
+    <div class="card" style="margin-top:12px"><div class="chart" id="chart-limits"></div>
+      <div class="note">Recorded since ${dt(L.since)}. Vertical tick on the meters above: projection at reset.</div></div>
+    <div class="card table-wrap" style="margin-top:12px"><h3>Weekly windows</h3><table id="table-weeks"></table></div>`;
+  mount("chart-limits", () => ({
+    color: [series(0), series(1)],
+    tooltip: Object.assign(baseOption().tooltip, { trigger: "axis", valueFormatter: v => pct(v, 1) }),
+    xAxis: axis({ type: "time", splitLine: { show: false }, axisLabel: { color: css("--text-muted"), hideOverlap: true, formatter: v => new Date(v).toLocaleDateString("en-US", { month: "short", day: "numeric" }) } }),
+    yAxis: axis({ type: "value", min: 0, max: 100, axisLabel: { color: css("--text-muted"), formatter: "{value}%" } }),
+    series: [
+      { name: "Week", type: "line", step: "end", showSymbol: false, lineStyle: { width: 2 }, z: 3, data: withResets(L.series, "week") },
+      { name: "5 hours", type: "line", step: "end", showSymbol: false, lineStyle: { width: 1, opacity: 0.55 }, z: 2, data: withResets(L.series, "five") },
+    ],
+  }));
+  table($("table-weeks"), [
+    { key: "reset", label: "Reset", render: r => dateOnly(r.reset) + (r.closed ? "" : " (current)") },
+    { key: "peak", label: "Peak", num: true, render: r => pct(r.peak, 1) },
+    { key: "unused", label: "Unused", num: true, render: r => r.closed ? pct(Math.max(0, 100 - r.peak), 1) : "–" },
+    { key: "cost", label: "API value in window", num: true, render: r => money(r.cost) },
+    { key: "usd_per_pct", label: "$ per point", num: true, render: r => r.usd_per_pct ? money(r.usd_per_pct) : "–" },
+  ], [...L.weeks].reverse());
+})();
+
+// Daily spend
+mount("chart-daily", () => {
+  const D = DATA.daily;
+  if (!D.days.length) return null;
+  return {
+    tooltip: Object.assign(baseOption().tooltip, {
+      trigger: "axis", axisPointer: { type: "shadow" },
+      formatter: ps => {
+        const i = ps[0].dataIndex, total = ps.reduce((s, p) => s + (p.value || 0), 0);
+        return `<b>${new Date(D.days[i]).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</b><br>` +
+          ps.filter(p => p.value).map(p => `${p.marker}${esc(p.seriesName)}: ${money(p.value)}`).join("<br>") +
+          `<br><b>Total ${money(total)}</b> · ${compact(D.tokens[i])} tokens`;
+      },
+    }),
+    xAxis: axis({ type: "category", data: D.days, axisLabel: { color: css("--text-muted"), formatter: shortDay } }),
+    yAxis: axis({ type: "value", axisLabel: { color: css("--text-muted"), formatter: v => usd0.format(v) } }),
+    series: D.models.map((m, i) => ({
+      name: m, type: "bar", stack: "cost", barMaxWidth: 22, color: series(i),
+      itemStyle: { borderColor: css("--surface-1"), borderWidth: 1, borderRadius: i === D.models.length - 1 ? [4, 4, 0, 0] : 0 },
+      data: D.series[m],
+    })),
+  };
+});
+
+// Projects
+mount("chart-projects", () => {
+  const P = DATA.projects.slice(0, 10).reverse();
+  if (!P.length) return null;
+  return {
+    color: [series(0)], legend: { show: false }, grid: { left: 8, right: 56, top: 8, bottom: 8, containLabel: true },
+    tooltip: Object.assign(baseOption().tooltip, { trigger: "axis", axisPointer: { type: "shadow" }, valueFormatter: money }),
+    xAxis: axis({ type: "value", axisLabel: { color: css("--text-muted"), formatter: v => usd0.format(v) } }),
+    yAxis: axis({ type: "category", data: P.map(p => p.name), splitLine: { show: false } }),
+    series: [{ name: "API value", type: "bar", barMaxWidth: 18, itemStyle: { borderRadius: [0, 4, 4, 0] },
+      label: { show: true, position: "right", color: css("--text-secondary"), fontSize: 11, formatter: p => usd0.format(p.value) },
+      data: P.map(p => p.cost) }],
+  };
+});
+table($("table-projects"), [
+  { key: "name", label: "Project" },
+  { key: "cost", label: "API value", num: true, render: r => money(r.cost) },
+  { key: "sessions", label: "Sessions", num: true, render: r => nf.format(r.sessions) },
+  { key: "tokens", label: "Tokens", num: true, render: r => compact(r.tokens) },
+  { key: "added", label: "Lines +/−", num: true, render: r => `+${nf.format(r.added)} / −${nf.format(r.removed)}` },
+  { key: "prs", label: "PRs", num: true },
+], DATA.projects, { sortable: true, sortKey: "cost" });
+
+// Heatmap
+mount("chart-heatmap", () => {
+  const H = DATA.heatmap;
+  if (!H.max) return null;
+  return {
+    legend: { show: false },
+    grid: { left: 8, right: 16, top: 8, bottom: 56, containLabel: true },
+    tooltip: Object.assign(baseOption().tooltip, { formatter: p => `${H.weekdays[p.value[1]]}, ${String(p.value[0]).padStart(2, "0")}:00–${String(p.value[0] + 1).padStart(2, "0")}:00<br><b>${money(p.value[2])}</b>` }),
+    xAxis: axis({ type: "category", data: [...Array(24).keys()].map(h => String(h).padStart(2, "0")), splitLine: { show: false } }),
+    yAxis: axis({ type: "category", data: H.weekdays, inverse: true, splitLine: { show: false } }),
+    visualMap: { min: 0, max: H.max, calculable: false, orient: "horizontal", left: "center", bottom: 0, itemHeight: 160, itemWidth: 10,
+      text: [usd0.format(H.max), "$0"], textStyle: { color: css("--text-muted"), fontSize: 11 },
+      inRange: { color: ["--seq-0", "--seq-1", "--seq-2", "--seq-3", "--seq-4", "--seq-5"].map(css) } },
+    series: [{ type: "heatmap", data: H.cells, itemStyle: { borderColor: css("--surface-1"), borderWidth: 2, borderRadius: 3 },
+      emphasis: { itemStyle: { borderColor: css("--text-primary"), borderWidth: 1 } } }],
+  };
+});
+
+// Cache
+(function () {
+  const C = DATA.cache;
+  const saved = C.without_cache - C.actual;
+  $("cache-tiles").innerHTML = [
+    tile("API value with cache", money(C.actual)),
+    tile("Without cache it would be", money(C.without_cache), C.without_cache ? `saved ${money(saved)} (${pct(100 * saved / C.without_cache)})` : ""),
+    tile("1-hour cache share", C.share_1h == null ? "–" : pct(100 * C.share_1h), "of cache tokens written"),
+  ].join("");
+  mount("chart-cache-split", () => {
+    const S = [...C.split].sort((a, b) => a.value - b.value);
+    if (!S.length) return null;
+    return {
+      legend: { show: false }, color: [series(0)], grid: { left: 8, right: 64, top: 8, bottom: 8, containLabel: true },
+      tooltip: Object.assign(baseOption().tooltip, { trigger: "axis", axisPointer: { type: "shadow" }, valueFormatter: money }),
+      xAxis: axis({ type: "value", axisLabel: { color: css("--text-muted"), formatter: v => usd0.format(v) } }),
+      yAxis: axis({ type: "category", data: S.map(s => s.name), splitLine: { show: false } }),
+      series: [{ name: "API value", type: "bar", barMaxWidth: 16, itemStyle: { borderRadius: [0, 4, 4, 0] },
+        label: { show: true, position: "right", color: css("--text-secondary"), fontSize: 11, formatter: p => money(p.value) },
+        data: S.map(s => s.value) }],
+    };
+  });
+  mount("chart-cache-ratio", () => {
+    const R = C.daily.filter(d => d.ratio != null);
+    if (!R.length) return null;
+    return {
+      legend: { show: false }, color: [series(0)], grid: { left: 8, right: 16, top: 12, bottom: 8, containLabel: true },
+      tooltip: Object.assign(baseOption().tooltip, { trigger: "axis", valueFormatter: v => pct(v, 1) }),
+      xAxis: axis({ type: "category", data: R.map(d => d.day), axisLabel: { color: css("--text-muted"), formatter: shortDay } }),
+      yAxis: axis({ type: "value", min: v => Math.max(0, Math.floor(v.min / 10) * 10), max: 100, axisLabel: { color: css("--text-muted"), formatter: "{value}%" } }),
+      series: [{ name: "Hit ratio", type: "line", showSymbol: false, lineStyle: { width: 2 }, data: R.map(d => +(100 * d.ratio).toFixed(2)) }],
+    };
+  });
+  const maxW = Math.max(0, ...C.top_writes.map(r => r.write_cost));
+  table($("table-cache"), [
+    { key: "title", label: "Session" },
+    { key: "project", label: "Project", cls: "muted" },
+    { key: "write_cost", label: "Cache writes", num: true, render: r => bar(r.write_cost, maxW) + money(r.write_cost) },
+    { key: "share", label: "Share of session", num: true, render: r => r.share == null ? "–" : pct(100 * r.share) },
+  ], C.top_writes);
+})();
+
+// Tools
+mount("chart-tools", () => {
+  const T = [...DATA.tools].reverse();
+  if (!T.length) return null;
+  return {
+    legend: { show: false }, color: [series(0)], grid: { left: 8, right: 56, top: 8, bottom: 8, containLabel: true },
+    tooltip: Object.assign(baseOption().tooltip, { trigger: "axis", axisPointer: { type: "shadow" }, valueFormatter: v => nf.format(v) + " calls" }),
+    xAxis: axis({ type: "log", logBase: 10, axisLabel: { color: css("--text-muted"), formatter: v => compact(v) } }),
+    yAxis: axis({ type: "category", data: T.map(t => t.name), splitLine: { show: false } }),
+    series: [{ name: "Calls", type: "bar", barMaxWidth: 14, itemStyle: { borderRadius: [0, 4, 4, 0] },
+      label: { show: true, position: "right", color: css("--text-secondary"), fontSize: 11, formatter: p => nf.format(p.value) },
+      data: T.map(t => t.calls) }],
+  };
+});
+(function () {
+  const maxM = Math.max(0, ...DATA.mcp.map(m => m.calls));
+  table($("table-mcp"), [
+    { key: "name", label: "Server" },
+    { key: "calls", label: "Calls", num: true, render: r => bar(r.calls, maxM) + nf.format(r.calls) },
+  ], DATA.mcp);
+  const S = DATA.subagents;
+  $("subagents").innerHTML = `<div class="tile"><div class="value">${pct(100 * S.share, 1)}</div><div class="sub">of API value spent in subagents</div></div>` +
+    (S.by_type.length ? `<div class="table-wrap" style="margin-top:8px"><table id="table-subagents"></table></div>` : "");
+  if (S.by_type.length) table($("table-subagents"), [
+    { key: "type", label: "Type" },
+    { key: "requests", label: "Requests", num: true, render: r => nf.format(r.requests) },
+    { key: "cost", label: "API value", num: true, render: r => money(r.cost) },
+  ], S.by_type);
+})();
+
+// Models and effort
+(function () {
+  const total = DATA.kpis.total || 1;
+  const maxC = Math.max(0, ...DATA.models.map(m => m.cost));
+  table($("table-models"), [
+    { key: "model", label: "Model" },
+    { key: "cost", label: "API value", num: true, render: r => bar(r.cost, maxC) + money(r.cost) },
+    { key: "share", label: "Share", num: true, render: r => pct(100 * r.cost / total, 1) },
+    { key: "requests", label: "Requests", num: true, render: r => nf.format(r.requests) },
+    { key: "tokens", label: "Tokens", num: true, render: r => compact(r.tokens) },
+  ], DATA.models);
+  const maxE = Math.max(0, ...DATA.effort.map(m => m.cost));
+  table($("table-effort"), [
+    { key: "effort", label: "Effort" },
+    { key: "cost", label: "API value", num: true, render: r => bar(r.cost, maxE) + money(r.cost) },
+    { key: "prompts", label: "Prompts", num: true, render: r => nf.format(r.prompts) },
+    { key: "per_prompt", label: "Avg. per prompt", num: true, render: r => money(r.per_prompt) },
+  ], DATA.effort);
+})();
+
+// Output
+(function () {
+  const O = DATA.outcome;
+  $("outcome-tiles").innerHTML = [
+    tile("Lines added", "+" + nf.format(O.added)),
+    tile("Lines removed", "−" + nf.format(O.removed)),
+    tile("Linked pull requests", nf.format(O.prs)),
+    tile("API value per 100 lines", money(O.cost_per_100_lines), "rough indicator – infrastructure work often changes little code"),
+  ].join("");
+})();
+
+// Outliers
+(function () {
+  const maxS = Math.max(0, ...DATA.top_sessions.map(s => s.cost));
+  table($("table-top-sessions"), [
+    { key: "start", label: "Started", cls: "nowrap", render: r => dt(r.start) },
+    { key: "title", label: "Title" },
+    { key: "project", label: "Project", cls: "muted" },
+    { key: "prompts", label: "Prompts", num: true },
+    { key: "requests", label: "Requests", num: true, render: r => nf.format(r.requests) },
+    { key: "cost", label: "API value", num: true, render: r => bar(r.cost, maxS) + money(r.cost) },
+  ], DATA.top_sessions);
+  const maxP = Math.max(0, ...DATA.top_prompts.map(s => s.cost));
+  table($("table-top-prompts"), [
+    { key: "ts", label: "Time", cls: "nowrap", render: r => dt(r.ts) },
+    { key: "excerpt", label: "Prompt", cls: "excerpt" },
+    { key: "project", label: "Project", cls: "muted" },
+    { key: "requests", label: "Requests", num: true },
+    { key: "cost", label: "API value", num: true, render: r => bar(r.cost, maxP) + money(r.cost) },
+  ], DATA.top_prompts);
+})();
+
+// History
+mount("chart-history", () => {
+  const H = DATA.history;
+  if (!H.months.length) return null;
+  return {
+    legend: { show: false }, color: [series(0)], grid: { left: 8, right: 16, top: 12, bottom: 8, containLabel: true },
+    tooltip: Object.assign(baseOption().tooltip, { trigger: "axis", axisPointer: { type: "shadow" },
+      formatter: ps => `<b>${ps[0].name}</b><br>${ps[0].value == null ? "no data" : compact(ps[0].value) + " tokens"}<br><span style="color:var(--text-muted)">Source: ${esc(H.sources[ps[0].dataIndex])}</span>` }),
+    xAxis: axis({ type: "category", data: H.months }),
+    yAxis: axis({ type: "value", axisLabel: { color: css("--text-muted"), formatter: v => compact(v) } }),
+    series: [{ name: "Tokens", type: "bar", barMaxWidth: 28, itemStyle: { borderRadius: [4, 4, 0, 0] }, data: H.tokens.map((v, i) => H.sources[i] === "no data" ? null : v) }],
+  };
+});
+
+// Sessions
+(function () {
+  const cols = [
+    { key: "start", label: "Started", cls: "nowrap", render: r => dt(r.start) },
+    { key: "title", label: "Title" },
+    { key: "project", label: "Project", cls: "muted" },
+    { key: "minutes", label: "Duration", num: true, render: r => r.minutes == null ? "–" : r.minutes >= 60 ? `${Math.floor(r.minutes / 60)} h ${String(r.minutes % 60).padStart(2, "0")} m` : `${r.minutes} m` },
+    { key: "model", label: "Model", cls: "muted" },
+    { key: "prompts", label: "Prompts", num: true },
+    { key: "requests", label: "Requests", num: true, render: r => nf.format(r.requests) },
+    { key: "tokens", label: "Tokens", num: true, render: r => compact(r.tokens) },
+    { key: "added", label: "Lines +/−", num: true, render: r => r.added == null ? "–" : `+${nf.format(r.added)} / −${nf.format(r.removed || 0)}` },
+    { key: "prs", label: "PRs", num: true },
+    { key: "cost", label: "API value", num: true, render: r => money(r.cost) },
+  ];
+  const t = table($("table-sessions"), cols, DATA.sessions, { sortable: true, sortKey: "start" });
+  const count = n => $("session-count").textContent = `${nf.format(n)} of ${nf.format(DATA.sessions.length)} sessions`;
+  count(DATA.sessions.length);
+  $("session-filter").addEventListener("input", e => {
+    const q = e.target.value.toLowerCase().trim();
+    const rows = q ? DATA.sessions.filter(s => (s.title + " " + s.project).toLowerCase().includes(q)) : DATA.sessions;
+    t.update(rows); count(rows.length);
+  });
+})();
+</script>
+</body>
+</html>
