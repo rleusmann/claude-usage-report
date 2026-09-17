@@ -58,7 +58,8 @@ It appends a snapshot only when a value changed. Without it, the limit section s
 
 ## Usage
 
-- `/usage-report` – refresh and open the report, or ask questions about your usage; the skill knows the database schema.
+- `/usage-report` – refresh and open the report. With arguments (`/usage-report how much did k8shs cost this week?`) it answers from the database instead.
+- The `usage-report` skill also triggers on its own when you ask about your Claude Code usage, cost or limits; it knows the database schema.
 - `bin/usage-report-update [--open] [--reprice] [--print-paths]` – manual refresh. Use `--reprice` after editing `lib/pricing.json`.
 
 ## Accuracy notes
