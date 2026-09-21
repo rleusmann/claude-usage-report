@@ -50,13 +50,38 @@ Restart Claude Code so the hooks load. The first import happens at the end of th
 
 ### Recording limits (optional, recommended)
 
-Plugins cannot configure the status line, and rate-limit data is only available to the status line. Add this to your status line script, right after it reads its JSON input into `$input`:
+Plugins cannot configure the status line, and rate-limit data is only available to the status line. Without a status line feeding them in, the limit section of the report stays empty; everything else works regardless.
+
+If you already have a status line script, add this right after it reads its JSON input into `$input`:
 
 ```bash
 printf '%s' "$input" | ~/.claude/plugins/cache/claude-usage-report/usage-report/bin/usage-report-log-limits >/dev/null 2>&1 &
 ```
 
-It appends a snapshot only when a value changed. Without it, the limit section stays empty and everything else still works.
+It appends a snapshot only when a value changed.
+
+If you do not have one, `examples/statusline.sh` is a complete two-line status line that already includes the call:
+
+```
+[Opus 5 · high] myrepo main ● PR #457 (approved) | +128/-34 | 1h 15m
+Context 37% (74k) | 5h 22% (18:10) | week 61% (Wed 23:43) | cache warm until 16:40, 87% hits | API value $3.14
+```
+
+Model and effort, repository, branch, unpushed commits and dirty state, linked PR, lines changed, session duration, context window, both rate-limit windows with their reset times, prompt cache state and the session's API value. Install it with:
+
+```bash
+cp examples/statusline.sh ~/.claude/statusline.sh && chmod +x ~/.claude/statusline.sh
+```
+
+and point `~/.claude/settings.json` at it:
+
+```json
+{
+  "statusLine": { "type": "command", "command": "~/.claude/statusline.sh" }
+}
+```
+
+It needs `jq` and finds the limit logger in the installed plugin, falling back to a local checkout.
 
 ## Usage
 
@@ -77,7 +102,7 @@ python3 -m unittest discover -s tests
 python3 lib/ingest.py --db /tmp/usage.db && python3 lib/render.py --db /tmp/usage.db --out /tmp/report.html
 ```
 
-Requirements: Python 3.9+ (standard library only), `jq` for the limit logger, macOS or Linux.
+Requirements: Python 3.9+ (standard library only), `jq` for the limit logger and the example status line, macOS or Linux.
 
 ## License
 
