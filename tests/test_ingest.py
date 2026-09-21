@@ -236,7 +236,7 @@ class MaskingTest(unittest.TestCase):
         self.assertNotIn("s3cret", ingest.mask_secrets("https://user:s3cret@example.com"))
 
     def test_keeps_normal_text_and_paths(self):
-        text = "Check /Users/robertleusmann/Code/k8shs/apps/monitoring/alloy/values.yaml please"
+        text = "Check /Users/alice/Code/example/apps/monitoring/alloy/values.yaml please"
         self.assertEqual(ingest.mask_secrets(text), text)
 
 

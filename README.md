@@ -40,9 +40,11 @@ Data lives in the plugin data directory (`~/.claude/plugins/data/usage-report-<m
 ## Installation
 
 ```bash
-claude plugin marketplace add ~/Code/claude-usage-report
+claude plugin marketplace add rleusmann/claude-usage-report
 claude plugin install usage-report@claude-usage-report
 ```
+
+To work from a local checkout instead, point the marketplace at the clone: `claude plugin marketplace add ~/path/to/claude-usage-report`.
 
 Restart Claude Code so the hooks load. The first import happens at the end of the next session, or immediately with `/usage-report`.
 
@@ -51,14 +53,14 @@ Restart Claude Code so the hooks load. The first import happens at the end of th
 Plugins cannot configure the status line, and rate-limit data is only available to the status line. Add this to your status line script, right after it reads its JSON input into `$input`:
 
 ```bash
-printf '%s' "$input" | ~/Code/claude-usage-report/bin/usage-report-log-limits >/dev/null 2>&1 &
+printf '%s' "$input" | ~/.claude/plugins/cache/claude-usage-report/usage-report/bin/usage-report-log-limits >/dev/null 2>&1 &
 ```
 
 It appends a snapshot only when a value changed. Without it, the limit section stays empty and everything else still works.
 
 ## Usage
 
-- `/usage-report` – refresh and open the report. With arguments (`/usage-report how much did k8shs cost this week?`) it answers from the database instead.
+- `/usage-report` – refresh and open the report. With arguments (`/usage-report how much did my main project cost this week?`) it answers from the database instead.
 - The `usage-report` skill also triggers on its own when you ask about your Claude Code usage, cost or limits; it knows the database schema.
 - `bin/usage-report-update [--open] [--reprice] [--print-paths]` – manual refresh. Use `--reprice` after editing `lib/pricing.json`.
 
@@ -76,3 +78,7 @@ python3 lib/ingest.py --db /tmp/usage.db && python3 lib/render.py --db /tmp/usag
 ```
 
 Requirements: Python 3.9+ (standard library only), `jq` for the limit logger, macOS or Linux.
+
+## License
+
+MIT, see [LICENSE](LICENSE). The vendored `lib/vendor/echarts.min.js` is Apache ECharts, Apache License 2.0; its license header is kept in the file.
